@@ -83,11 +83,32 @@ Once wired up, the package maps these routes:
 
 The Google endpoint is only mapped when
 `opts.GoogleFirebaseAuthOptions` is set in the DI configuration
-(see §3 below).
+(see §4 below).
 
 ## Step-by-step setup
 
-### 1. Strongly-typed `JwtSettings`
+### 1. Install the NuGet package
+
+Add `The.Jwt.Auth.Endpoints` to every project that either wires it
+into DI or maps its endpoints — typically both the API project (for
+`app.MapJwtAuthEndpoints<TUser>()` in `Program.cs`) and the
+Infrastructure project (for `services.AddJwtAuthEndpoints<TUser>()`
+and the four consumer implementations described in §5):
+
+```bash
+dotnet add package The.Jwt.Auth.Endpoints
+```
+
+Run the command from each project's directory, or from the solution
+root with `--project <Project>.csproj` to target a specific project.
+Pin every reference to the **same** version — a version drift between
+the API and Infrastructure projects will either fail to compile or
+silently pull two copies of the package.
+
+The package targets .NET 9. Verify each consuming project's
+`<TargetFramework>` is `net9.0` (or higher).
+
+### 2. Strongly-typed `JwtSettings`
 
 Define one POCO with a `Tag` constant, bind it via `IOptions<T>`, and
 fail fast if the secret is missing (see also
@@ -118,7 +139,7 @@ builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection(JwtSettings.Tag));
 ```
 
-### 2. ASP.NET Core Identity
+### 3. ASP.NET Core Identity
 
 Register Identity **before** the package's DI extension so its
 stores are ready when the JWT auth chain is built:
@@ -143,7 +164,7 @@ builder.Services
 Do not disable password complexity without a written trade-off and a
 compensating control (see `aspnetcore-safe-code` §13).
 
-### 3. Register the package
+### 4. Register the package
 
 Call `AddJwtAuthEndpoints<TUser>()` from
 `The.Jwt.Auth.Endpoints.Extensions`. Copy every setting from the
@@ -203,7 +224,7 @@ if `Secret`/`Issuer`/`Audience` are blank or either lifespan is `0`.
 The same validator rejects any non-default authentication-scheme
 name — do not touch `opts.AuthenticationScheme`.
 
-### 4. Required consumer implementations
+### 5. Required consumer implementations
 
 Four contracts from `The.Jwt.Auth.Endpoints.Helpers` must be
 registered by the host. The package `TryAddScoped`s a default
