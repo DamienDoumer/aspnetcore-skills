@@ -402,6 +402,9 @@ the database accept an unconstrained string in place of an enum.
 
 A blunt list. Every one is a security or reliability bug.
 
+- Never load all the database data in a dbset to memory before filtering. Always filter in the query! So as to avoid
+memory leaks and performance issues. For example, avoid `dbContext.Products.ToList().Where(p => p.IsActive)`; instead, use `dbContext.Products.Where(p => p.IsActive).ToList()`.
+- When registering services in DI, never use reflection with typeof(...) instead, use generic type parameters. For example, avoid `services.AddScoped(typeof(IRepository<>), typeof(Repository<>))`; instead, use `services.AddScoped<IRepository<Foo>, Repository<Foo>>()`.
 - Hard-coded API keys, encryption keys, JWT secrets, or database
   passwords in `appsettings.json` (or anywhere in source control).
 - Static AES IV. Every message needs its own random IV.
